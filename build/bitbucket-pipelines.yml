@@ -1,0 +1,141 @@
+#  Template NodeJS build
+
+#  This template allows you to validate your NodeJS code.
+#  The workflow allows running tests and code linting on the default branch.
+
+image: node:14
+
+pipelines:
+  branches:
+    qa:
+      - step:
+          name: Build
+          caches:
+            - node
+          script:
+            - npm install
+              
+      - step:
+          name: Code linting
+          script:
+            - npm install eslint
+            - npx eslint --fix
+          caches:
+            - node
+      - step:
+          name: Compress project and deploy 
+          deployment: QA-Server
+          image: atlassian/default-image:2
+          script:
+            - /bin/bash update_env.sh
+            - zip -r scheduler.zip .
+              
+            - pipe: atlassian/aws-code-deploy:0.2.6
+              variables:  
+                AWS_DEFAULT_REGION: 'us-east-1'
+                AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+                AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+                APPLICATION_NAME: 'qa-scheduler-app'
+                S3_BUCKET: 'cm-scheduler-pipeline'
+                COMMAND: 'upload'
+                ZIP_FILE: 'scheduler.zip'
+                VERSION_LABEL: 'QA-CM-0.1.$BITBUCKET_BUILD_NUMBER'
+            - pipe: atlassian/aws-code-deploy:0.2.6
+              variables:  
+                AWS_DEFAULT_REGION: 'us-east-1'
+                AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+                AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+                APPLICATION_NAME: 'qa-scheduler-app'
+                S3_BUCKET: 'cm-scheduler-pipeline'
+                COMMAND: 'deploy'
+                DEPLOYMENT_GROUP: 'qa-scheduler-deployment'
+                VERSION_LABEL: 'QA-CM-0.1.$BITBUCKET_BUILD_NUMBER'    
+                FILE_EXISTS_BEHAVIOR: "OVERWRITE"
+    staging:
+      - step:
+          name: Build
+          caches:
+            - node
+          script:
+            - npm install
+              
+      - step:
+          name: Code linting
+          script:
+            - npm install eslint
+            - npx eslint --fix
+          caches:
+            - node
+      - step:
+          name: Compress project and deploy 
+          deployment: Staging
+          image: atlassian/default-image:2
+          script:
+            - /bin/bash update_env.sh
+            - zip -r scheduler.zip .
+              
+            - pipe: atlassian/aws-code-deploy:0.2.6
+              variables:  
+                AWS_DEFAULT_REGION: 'us-east-1'
+                AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+                AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+                APPLICATION_NAME: 'qa-scheduler-app'
+                S3_BUCKET: 'cm-scheduler-pipeline'
+                COMMAND: 'upload'
+                ZIP_FILE: 'scheduler.zip'
+                VERSION_LABEL: 'staging-CM-0.1.$BITBUCKET_BUILD_NUMBER'
+            - pipe: atlassian/aws-code-deploy:0.2.6
+              variables:  
+                AWS_DEFAULT_REGION: 'us-east-1'
+                AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+                AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+                APPLICATION_NAME: 'qa-scheduler-app'
+                S3_BUCKET: 'cm-scheduler-pipeline'
+                COMMAND: 'deploy'
+                DEPLOYMENT_GROUP: 'staging-scheduler-deployment'
+                VERSION_LABEL: 'staging-CM-0.1.$BITBUCKET_BUILD_NUMBER'    
+                FILE_EXISTS_BEHAVIOR: "OVERWRITE"           
+    development:
+      - step:
+          name: Build
+          caches:
+            - node
+          script:
+            - npm install
+              
+      - step:
+          name: Code linting
+          script:
+            - npm install eslint
+            - npx eslint --fix
+          caches:
+            - node
+      - step:
+          name: Compress project and deploy 
+          deployment: Development
+          image: atlassian/default-image:2
+          script:
+            - /bin/bash update_env.sh
+            - zip -r scheduler.zip .
+              
+            - pipe: atlassian/aws-code-deploy:0.2.6
+              variables:  
+                AWS_DEFAULT_REGION: 'us-east-1'
+                AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+                AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+                APPLICATION_NAME: 'qa-scheduler-app'
+                S3_BUCKET: 'cm-scheduler-pipeline'
+                COMMAND: 'upload'
+                ZIP_FILE: 'scheduler.zip'
+                VERSION_LABEL: 'dev-CM-0.1.$BITBUCKET_BUILD_NUMBER'
+            - pipe: atlassian/aws-code-deploy:0.2.6
+              variables:  
+                AWS_DEFAULT_REGION: 'us-east-1'
+                AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+                AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+                APPLICATION_NAME: 'qa-scheduler-app'
+                S3_BUCKET: 'cm-scheduler-pipeline'
+                COMMAND: 'deploy'
+                DEPLOYMENT_GROUP: 'dev-scheduler-deployment'
+                VERSION_LABEL: 'dev-CM-0.1.$BITBUCKET_BUILD_NUMBER'    
+                FILE_EXISTS_BEHAVIOR: "OVERWRITE"                       

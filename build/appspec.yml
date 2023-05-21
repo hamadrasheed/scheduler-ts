@@ -1,0 +1,23 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /var/www/nodejs/ovada_cm_scheduler_build
+hooks:
+  BeforeInstall:
+    - location: /before_install.sh
+      timeout: 300
+      runas: root
+  AfterInstall:
+    - location: /after_install.sh
+      timeout: 300
+      runas: root
+  ApplicationStart:
+    - location: /application_start.sh
+      timeout: 300
+      runas: root
+  ValidateService:
+    - location: /validate.sh
+      timeout: 300
+      runas: root
+ 
